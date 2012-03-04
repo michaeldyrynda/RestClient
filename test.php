@@ -15,7 +15,6 @@ try {
     $response = $restclient->execute(
         RestClient::REQUEST_TYPE_GET,
         '/search.json',
-        array(),
         array( 'q' => '@foxfooty', )
     );
 

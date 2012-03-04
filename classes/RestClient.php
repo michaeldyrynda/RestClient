@@ -179,11 +179,11 @@ class RestClient {
      * @throws RESTHTTPException if cURL not initialised, invalid request type
      * @param string  $type   HTTP request type to send
      * @param string  $path   Path to send request to
-     * @param array   $header (optional) Additional HTTP headers to send
      * @param array   $params (optional) Parrameters to send with request
+     * @param array   $header (optional) Additional HTTP headers to send
      * @return array
      */
-    public function execute( $type, $path, $header = array(), $params = array() ) {
+    public function execute( $type, $path, $params = array(), $header = array() ) {
         if ( $this->cURLInitialised() === false ) {
             throw new RestException( self::EXCEPTION_CURL_NOT_INITIALISED );
         }
