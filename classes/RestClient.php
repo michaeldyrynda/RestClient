@@ -180,10 +180,11 @@ class RestClient {
      * @param string  $type   HTTP request type to send
      * @param string  $path   Path to send request to
      * @param array   $params (optional) Parrameters to send with request
-     * @param array   $header (optional) Additional HTTP headers to send
+     * @param string  $user   (optional) If set, set the HTTP BASIC Authorisation user
+     * @param string  $pass   (optional) If set, set the HTTP BASIC Authorisation pass
      * @return array
      */
-    public function execute( $type, $path, $params = array(), $header = array() ) {
+    public function execute( $type, $path, $params = array(), $user = null, $pass = null ) {
         if ( $this->cURLInitialised() === false ) {
             throw new RestException( self::EXCEPTION_CURL_NOT_INITIALISED );
         }
@@ -223,9 +224,10 @@ class RestClient {
             break;
         }
 
-        $this->_initHeader( $header );
+        $this->_initAuthorisation( $user, $pass );
         $this->_initURL( $path, $params );
         $this->_runcURL();
+
         return $this->_response;
     }
 
@@ -375,10 +377,12 @@ class RestClient {
      * @return void
      */
     private function _runcURL() {
-        $response = curl_exec( $this->_ch );
-        $info     = curl_getinfo( $this->_ch );
+        $response   = curl_exec( $this->_ch );
+        $info       = curl_getinfo( $this->_ch );
+        $headerSize = curl_getinfo( $this->_ch, CURLINFO_HEADER_SIZE );
 
-        list( $this->_response['header'], $this->_response['body'] ) = explode( "\r\n\r\n", $response, 2 );
+        $this->_response['header']    = substr( $response, 0, $headerSize );
+        $this->_response['body']      = substr( $response, $headerSize );
         $this->_response['http_code'] = $info['http_code'];
 
         if ( $this->beVerbose() === true ) {
@@ -442,20 +446,22 @@ class RestClient {
 
 
     /**
-     * Initialise any additional headers
+     * Initialise the username / password HTTP BASIC authorisation data
      *
      * @access private
      * @throws RestException if cURL not initialised
      * @return void
-     * @param unknown $header
+     * @param string  $user (optional) Username to set
+     * @param string  $pass (optional) Password to set
      */
-    private function _initHeader( $header ) {
+    private function _initAuthorisation( $user = null, $pass = null ) {
         if ( $this->cURLInitialised() === false ) {
             throw new RestException( self::EXCEPTION_CURL_NOT_INITIALISED );
         }
 
-        if ( is_array( $header ) && count( $header ) > 0 ) {
-            curl_setopt( $this->_ch, CURLOPT_HEADER, $header );
+        if ( !is_null( $user ) && !is_null( $pass ) ) {
+            curl_setopt( $this->_ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC );
+            curl_setopt( $this->_ch, CURLOPT_USERPWD, sprintf( '%s:%s', $user, $pass ) );
         }
     }
 
@@ -477,8 +483,8 @@ class RestClient {
             curl_setopt( $this->_ch, CURLOPT_POSTFIELDS, $params );
         }
         else if ( !is_null( $params ) ) {
-            curl_setopt( $this->_ch, CURLOPT_POSTFIELDS, sprintf( '@%s', $params ) );
-        }
+                curl_setopt( $this->_ch, CURLOPT_POSTFIELDS, sprintf( '@%s', $params ) );
+            }
         else {
             curl_setopt( $this->_ch, CURLOPT_POSTFIELDS, $params );
         }
