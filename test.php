@@ -19,7 +19,7 @@ try {
     );
 
     $body = json_decode( $response['body'] );
-    print_r( $body );
+    print '<pre>' . var_export( $body, true ) . '</pre>';
 } catch ( Exception $e ) {
     print_r( $e->getMessage() ) . PHP_EOL;
 }
