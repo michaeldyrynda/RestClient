@@ -504,8 +504,8 @@ class RestClient {
             curl_setopt( $this->_ch, CURLOPT_POSTFIELDS, $params );
         }
         else if ( !is_null( $params ) ) {
-                curl_setopt( $this->_ch, CURLOPT_POSTFIELDS, sprintf( '@%s', $params ) );
-            }
+            curl_setopt( $this->_ch, CURLOPT_POSTFIELDS, sprintf( '@%s', $params ) );
+        }
         else {
             curl_setopt( $this->_ch, CURLOPT_POSTFIELDS, $params );
         }
