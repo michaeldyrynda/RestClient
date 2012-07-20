@@ -63,9 +63,16 @@ class RestClient {
     /**#@-*/
 
     /**#@+
+     * Valid POST formats
+     */
+    const POST_FORMAT_JSON      = 'json';
+    /**#@-*/
+
+    /**#@+
      * RestClient options
      */
-    const OPTION_VERBOSE    = 'verbose';
+    const OPTION_VERBOSE        = 'verbose';
+    const OPTION_POST_FORMAT    = 'post_format';
     /**#@-*/
     /**#@-*/
 
@@ -98,6 +105,13 @@ class RestClient {
      * @var string $_userAgent User agent to be sent with requests
      */
     private $_userAgent = '';
+
+    /**
+     * REST API POST format
+     *
+     * @var string $_postFormat REST API POST format
+     */
+    private $_postFormat = '';
 
     /**
      * REST API response
@@ -227,6 +241,9 @@ class RestClient {
 
         $this->_initAuthorisation( $user, $pass );
         $this->_initHeader( $header );
+        if ( $type !== self::REQUEST_TYPE_GET ) {
+            $params = array();
+        }
         $this->_initURL( $path, $params );
         $this->_runcURL();
 
@@ -501,12 +518,24 @@ class RestClient {
         }
 
         if ( is_array( $params ) && count( $params ) > 0 ) {
+            if ( $this->_postFormat == self::POST_FORMAT_JSON ) {
+                $params = json_encode( $params );
+            }
+
             curl_setopt( $this->_ch, CURLOPT_POSTFIELDS, $params );
         }
         else if ( !is_null( $params ) ) {
+            if ( $this->_postFormat == self::POST_FORMAT_JSON ) {
+                $params = json_encode( $params );
+            }
+
             curl_setopt( $this->_ch, CURLOPT_POSTFIELDS, sprintf( '@%s', $params ) );
         }
         else {
+            if ( $this->_postFormat == self::POST_FORMAT_JSON ) {
+                $params = json_encode( $params );
+            }
+
             curl_setopt( $this->_ch, CURLOPT_POSTFIELDS, $params );
         }
     }
@@ -563,7 +592,8 @@ class RestClient {
      */
     private function _isValidClientOption( $clientOption ) {
         $validClientOptions = array(
-            self::OPTION_VERBOSE => array( true, false, ),
+            self::OPTION_VERBOSE        => array( true, false, ),
+            self::OPTION_POST_FORMAT    => array( 'json', ),
         );
 
         if ( array_key_exists( $clientOption, $validClientOptions ) ) {
@@ -592,6 +622,10 @@ class RestClient {
                 switch ( $key ) {
                     case self::OPTION_VERBOSE:
                         $this->_verbose = $value;
+                    break;
+
+                    case self::OPTION_POST_FORMAT:
+                        $this->_postFormat = $value;
                     break;
 
                     default:
