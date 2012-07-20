@@ -1,0 +1,4 @@
+.phptidy-cache
+.phptidy-config.php
+*~
+*.phptidy.php
