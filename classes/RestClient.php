@@ -71,8 +71,9 @@ class RestClient {
     /**#@+
      * RestClient options
      */
-    const OPTION_VERBOSE        = 'verbose';
-    const OPTION_POST_FORMAT    = 'post_format';
+    const OPTION_VERBOSE          = 'verbose';
+    const OPTION_POST_FORMAT      = 'post_format';
+    const OPTION_HTTP_AUTH_METHOD = 'auth_method';
     /**#@-*/
     /**#@-*/
 
@@ -140,6 +141,13 @@ class RestClient {
      * @var bool $_verbose Whether or not we should be verbose
      */
     private $_verbose = false;
+
+    /**
+     * If using HTTP authentication, store the authentication method
+     *
+     * @var int $_authMethod The authentication method to use
+     */
+    private $_authMethod = null;
     /**#@-*/
 
     /**#@+
@@ -497,8 +505,10 @@ class RestClient {
             throw new RestException( self::EXCEPTION_CURL_NOT_INITIALISED );
         }
 
+        $authMethod = ! is_null( $this->_authMethod ) ? $this->_authMethod : CURLAUTH_BASIC;
+
         if ( !is_null( $user ) && !is_null( $pass ) ) {
-            curl_setopt( $this->_ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC );
+            curl_setopt( $this->_ch, CURLOPT_HTTPAUTH, $authMethod );
             curl_setopt( $this->_ch, CURLOPT_USERPWD, sprintf( '%s:%s', $user, $pass ) );
         }
     }
@@ -592,8 +602,16 @@ class RestClient {
      */
     private function _isValidClientOption( $clientOption ) {
         $validClientOptions = array(
-            self::OPTION_VERBOSE        => array( true, false, ),
-            self::OPTION_POST_FORMAT    => array( 'json', ),
+            self::OPTION_VERBOSE          => array( true, false, ),
+            self::OPTION_POST_FORMAT      => array( 'json', ),
+            self::OPTION_HTTP_AUTH_METHOD => array(
+                CURLAUTH_BASIC,
+                CURLAUTH_DIGEST,
+                CURLAUTH_GSSNEGOTIATE,
+                CURLAUTH_NTLM,
+                CURLAUTH_ANY,
+                CURLAUTH_ANYSAFE,
+            ),
         );
 
         if ( array_key_exists( $clientOption, $validClientOptions ) ) {
@@ -626,6 +644,10 @@ class RestClient {
 
                     case self::OPTION_POST_FORMAT:
                         $this->_postFormat = $value;
+                    break;
+
+                    case self::OPTION_HTTP_AUTH_METHOD:
+                        $this->_authMethod = $value;
                     break;
 
                     default:
